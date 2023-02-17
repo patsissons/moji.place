@@ -64,8 +64,12 @@
   <div class="navbar bg-base-100">
     <div class="navbar-start">
       <a class="btn btn-ghost text-xl font-bold" href="https://moji.place">
-        <span class="hidden sm:inline">moji.place</span>
-        <span class="inline sm:hidden">moji</span>
+        <div class="flex items-center">
+          <div class="w-12 h-12 p-1">
+            <img src="/favicon.svg" alt="moji.place logo" />
+          </div>
+          <span class="hidden sm:inline">moji.place</span>
+        </div>
       </a>
     </div>
     <div class="navbar-center lg:min-w-[512px] md:min-w-[384px]">
