@@ -81,6 +81,16 @@
     }
   }
 
+  const handleShare = () => {
+    if (!selectedEmoji || !navigator.share) return
+
+    navigator.share({
+      text: selectedEmoji.name,
+      title: selectedEmoji.name,
+      url: selectedEmoji.url,
+    })
+  }
+
   const loadEmojis = async (nameOrEndpoint: string) => {
     console.log(`loading ${nameOrEndpoint}`)
     emojis = await fetchEmojiPack(nameOrEndpoint)
@@ -201,36 +211,60 @@
   <label class="modal-box relative w-auto" for="">
     {#if selectedEmoji}
       <div class="flex flex-col items-center gap-2">
-        <h3 class="text-xl font-bold">{selectedEmoji.name}</h3>
+        {#if navigator.canShare?.({ url: selectedEmoji.url })}
+          <button
+            class="btn bt-ghost items-center justify-between gap-2 w-full"
+            on:click={handleShare}
+          >
+            <h3 class="text-xl font-bold">{selectedEmoji.name}</h3>
+            <svg
+              class="w-auto h-6"
+              stroke="currentColor"
+              fill="currentColor"
+              stroke-width="0"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+              ><path
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="32"
+                d="M336 192h40a40 40 0 0140 40v192a40 40 0 01-40 40H136a40 40 0 01-40-40V232a40 40 0 0140-40h40m160-64l-80-80-80 80m80 193V48"
+              />
+            </svg>
+          </button>
+        {:else}
+          <h3 class="text-xl font-bold">{selectedEmoji.name}</h3>
+        {/if}
         <div class="flex gap-2">
           <a href={selectedEmoji.url}>
-            <button class="btn btn-accent gap-2">
+            <button class="btn btn-accent items-center justify-between gap-2">
               Download
               <svg
+                class="w-auto h-6"
                 stroke="currentColor"
                 fill="currentColor"
                 stroke-width="0"
                 viewBox="0 0 512 512"
-                height="1em"
-                width="1em"
                 xmlns="http://www.w3.org/2000/svg"
                 ><path
                   d="M472.7 189.5c-13.26-8.43-29.83-14.56-48.08-17.93A16 16 0 01412 159.28c-7.86-34.51-24.6-64.13-49.15-86.58C334.15 46.45 296.21 32 256 32c-35.35 0-68 11.08-94.37 32a150.13 150.13 0 00-41.95 52.83A16.05 16.05 0 01108 125.8c-27.13 4.9-50.53 14.68-68.41 28.7C13.7 174.83 0 203.56 0 237.6 0 305 55.93 352 136 352h104V224.45c0-8.61 6.62-16 15.23-16.43A16 16 0 01272 224v128h124c72.64 0 116-34.24 116-91.6 0-30.05-13.59-54.57-39.3-70.9zM240 425.42l-36.7-36.64a16 16 0 00-22.6 22.65l64 63.89a16 16 0 0022.6 0l64-63.89a16 16 0 00-22.6-22.65L272 425.42V352h-32z"
-                /></svg
-              >
+                />
+              </svg>
             </button>
           </a>
           {#if selectedEmoji.backup_url}
             <a href={selectedEmoji.backup_url}>
-              <button class="btn btn-secondary gap-2">
+              <button
+                class="btn btn-secondary items-center justify-between gap-2"
+              >
                 Alternate
                 <svg
+                  class="w-auto h-6"
                   stroke="currentColor"
                   fill="currentColor"
                   stroke-width="0"
                   viewBox="0 0 512 512"
-                  height="1em"
-                  width="1em"
                   xmlns="http://www.w3.org/2000/svg"
                   ><path
                     fill="none"
@@ -238,8 +272,8 @@
                     stroke-linejoin="round"
                     stroke-width="32"
                     d="M320 336h76c55 0 100-21.21 100-75.6s-53-73.47-96-75.6C391.11 99.74 329 48 256 48c-69 0-113.44 45.79-128 91.2-60 5.7-112 35.88-112 98.4S70 336 136 336h56m0 64.1l64 63.9 64-63.9M256 224v224.03"
-                  /></svg
-                >
+                  />
+                </svg>
               </button>
             </a>
           {/if}
