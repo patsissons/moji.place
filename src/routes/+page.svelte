@@ -216,31 +216,38 @@
 <label for="emoji-modal" class="modal cursor-pointer">
   <label class="modal-box relative w-auto" for="">
     {#if selectedEmoji}
-      <div class="flex flex-col items-center gap-2">
+      <div class="flex flex-col items-center justify-between gap-2">
+        <a
+          class="btn btn-link btn-sm text-info"
+          href={`${$page.url.origin}?emoji=${selectedEmoji.name}&filter=${filter}`}
+        >
+          <h3 class="text-xl font-bold text-center">
+            {selectedEmoji.name}
+          </h3>
+        </a>
         {#if navigator.canShare?.({ url: selectedEmoji.url })}
-          <button
-            class="btn bt-ghost items-center justify-between gap-2 w-full"
-            on:click={handleShare}
-          >
-            <h3 class="text-xl font-bold">{selectedEmoji.name}</h3>
-            <svg
-              class="w-auto h-6"
-              stroke="currentColor"
-              fill="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              xmlns="http://www.w3.org/2000/svg"
-              ><path
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="32"
-                d="M336 192h40a40 40 0 0140 40v192a40 40 0 01-40 40H136a40 40 0 01-40-40V232a40 40 0 0140-40h40m160-64l-80-80-80 80m80 193V48"
-              />
-            </svg>
-          </button>
-        {:else}
-          <h3 class="text-xl font-bold">{selectedEmoji.name}</h3>
+          <div class="absolute top-6 right-6">
+            <button
+              class="btn bt-ghost btn-square btn-sm"
+              on:click={handleShare}
+            >
+              <svg
+                class="w-full h-full p-1"
+                stroke="currentColor"
+                fill="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+                ><path
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="32"
+                  d="M336 192h40a40 40 0 0140 40v192a40 40 0 01-40 40H136a40 40 0 01-40-40V232a40 40 0 0140-40h40m160-64l-80-80-80 80m80 193V48"
+                />
+              </svg>
+            </button>
+          </div>
         {/if}
         <div class="flex gap-2">
           <a href={selectedEmoji.url}>
