@@ -1,34 +1,44 @@
 import { fetchJson, type FetchOptions } from './json'
 
-const sets = {
+const packs = {
   'epk-emoji-store': '2023-02-17',
 } as const
 
-export type EmojiSetName = keyof typeof sets
+export type EmojiPackName = keyof typeof packs
 
-export interface EmojiSetItem {
+export interface EmojiPackItem {
   name: string
   url: string
   backup_url?: string
 }
 
-export type EmojiList = EmojiSetItem[]
+export type EmojiList = EmojiPackItem[]
 
-export type EmojiSet = Record<string, Omit<EmojiSetItem, 'name'>>
+export type EmojiSet = Record<string, Omit<EmojiPackItem, 'name'>>
 
 export const basePath = '/emojis'
 
-export async function fetchEmojiSet(
-  name: EmojiSetName,
+export async function fetchEmojiPack(
+  nameOrEndpoint: string,
   options?: FetchOptions,
 ) {
-  const list = await fetchJson<EmojiList>(
-    `${basePath}/${name}/${sets[name]}.json`,
-    options,
-  )
+  const endpoint = packEndpoint(nameOrEndpoint)
+  if (!endpoint) return {}
 
-  return list.reduce((map, { name, ...item }) => {
-    map[name] = item
-    return map
-  }, {} as EmojiSet)
+  const list = await fetchJson<EmojiList>(endpoint, options)
+
+  return list
+    .filter(({ url }) => url.startsWith('http'))
+    .reduce((map, { name, ...item }) => {
+      map[name] = item
+      return map
+    }, {} as EmojiSet)
+}
+
+function packEndpoint(nameOrEndpoint: string) {
+  if (/^https?:/.test(nameOrEndpoint)) return nameOrEndpoint
+  if (nameOrEndpoint in packs)
+    return `${basePath}/${nameOrEndpoint}/${
+      packs[nameOrEndpoint as EmojiPackName]
+    }.json`
 }

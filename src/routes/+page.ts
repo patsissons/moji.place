@@ -1,10 +1,10 @@
 import type { PageLoad } from './$types'
-import type { EmojiSetName } from '$lib/client/emoji'
+import type { EmojiPackName } from '$lib/client/emoji'
 
-const sets: EmojiSetName[] = ['epk-emoji-store']
+const packs: EmojiPackName[] = ['epk-emoji-store']
 
 export const load = (() => {
   return {
-    sets,
+    packs,
   }
 }) satisfies PageLoad

@@ -3,9 +3,9 @@
   import shuffle from 'lodash/shuffle'
   import { onMount } from 'svelte'
   import {
-    fetchEmojiSet,
+    fetchEmojiPack,
+    type EmojiPackItem,
     type EmojiSet,
-    type EmojiSetItem,
   } from '$lib/client/emoji'
   import type { PageData } from './$types'
   import { page } from '$app/stores'
@@ -13,19 +13,47 @@
   export let data: PageData
 
   let documentElement: HTMLElement | undefined = undefined
-  let max = Number($page.url.searchParams.get('max') || 100)
+  let max: number | undefined = undefined
+  let pack: string | undefined = undefined
+  let emoji: string | undefined = undefined
+  let filter: string | undefined = undefined
   let dark = true
-  let filter = ''
-  let emojiSet = data.sets[0]
   let emojis: EmojiSet | undefined
   let emojiNames: string[] | undefined
-  let visibleNames: string[] | undefined
-  let selectedEmoji: EmojiSetItem | undefined
+  let filteredNames: string[] | undefined
+  let selectedEmoji: EmojiPackItem | undefined
   let showModal = false
 
-  $: if (filter && emojiNames) {
-    const regex = new RegExp(filter, 'i')
-    visibleNames = emojiNames.filter((name) => regex.test(name))
+  $: if (documentElement && pack) {
+    loadEmojis(pack)
+  }
+
+  $: if (emojis) {
+    selectedEmoji = emoji
+      ? {
+          ...emojis[emoji],
+          name: emoji,
+        }
+      : undefined
+  }
+
+  $: if (emoji) {
+    showModal = true
+  }
+
+  $: if (emojiNames) {
+    if (filter) {
+      try {
+        const regex = new RegExp(filter, 'i')
+        filteredNames = emojiNames.filter((name) => regex.test(name))
+      } catch {
+        filteredNames = emojiNames.filter(
+          (name) => name.indexOf(filter as string) >= 0,
+        )
+      }
+    } else {
+      filteredNames = emojiNames
+    }
   }
 
   $: if (documentElement) {
@@ -44,38 +72,36 @@
   const handleEmojiSelect = (name: string) => {
     if (!emojis) return
 
-    selectedEmoji = {
-      ...emojis[name],
-      name,
-    }
-    showModal = true
+    emoji = name
   }
 
   const handleModalToggle = (e: Event) => {
-    if (!(e.target as HTMLInputElement).value) {
-      selectedEmoji = undefined
-      showModal = false
+    if (!(e.target as HTMLInputElement).checked) {
+      emoji = undefined
     }
   }
 
-  const loadEmojis = async () => {
-    emojis = await fetchEmojiSet(emojiSet)
+  const loadEmojis = async (nameOrEndpoint: string) => {
+    console.log(`loading ${nameOrEndpoint}`)
+    emojis = await fetchEmojiPack(nameOrEndpoint)
     emojiNames = shuffle(Object.keys(emojis))
-    visibleNames = emojiNames
   }
 
   onMount(() => {
     dark = window.matchMedia('(prefers-color-scheme: dark)').matches
     documentElement = document.documentElement
 
-    loadEmojis()
+    max = Number($page.url.searchParams.get('max') || 100)
+    emoji = $page.url.searchParams.get('emoji') || undefined
+    filter = $page.url.searchParams.get('filter') || ''
+    pack = $page.url.searchParams.get('pack') || data.packs[0]
   })
 </script>
 
 <div class="w-screen h-screen min-w-[352px]">
   <div class="navbar bg-base-100">
     <div class="navbar-start">
-      <a class="btn btn-ghost text-xl font-bold" href="https://moji.place">
+      <a class="btn btn-ghost text-xl font-bold" href={$page.url.origin}>
         <div class="flex items-center">
           <div class="w-12 h-12 p-1">
             <img src="/favicon.svg" alt="moji.place logo" />
@@ -90,6 +116,7 @@
           class="input input-bordered"
           type="text"
           placeholder="Search for emojis..."
+          value={filter}
           on:input={handleFilterInput}
         />
       </div>
@@ -104,9 +131,9 @@
   </div>
   <div class="w-full h-full">
     <div class="container mx-auto py-5">
-      {#if visibleNames && emojis}
+      {#if filteredNames && emojis}
         <div class="flex flex-wrap justify-center gap-5">
-          {#each visibleNames.slice(0, max) as name}
+          {#each filteredNames.slice(0, max) as name}
             <button on:click={() => handleEmojiSelect(name)}>
               <div class="flex flex-col gap-2 w-16">
                 <div class="tooltip" data-tip={name}>
@@ -129,15 +156,36 @@
             </button>
           {/each}
         </div>
-        {#if emojiNames && emojiNames.length > max}
+        {#if max && filteredNames && filteredNames.length > max}
           <div class="text-center p-5">
             <p class="text-orange-500 dark:text-yellow-500">
-              ...{emojiNames.length - max} more emojis
+              ... and {(filteredNames.length - max).toLocaleString()} more emojis
             </p>
           </div>
         {/if}
       {/if}
     </div>
+    {#if emojiNames && emojiNames.length === 0}
+      <div class="flex justify-center">
+        <div class="alert alert-error shadow-lg w-auto">
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="stroke-current flex-shrink-0 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span>{pack} is not a valid emoji pack.</span>
+          </div>
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
 
