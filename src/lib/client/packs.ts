@@ -1,6 +1,6 @@
 export const packs = {
-  'epk-emoji-store':
-    'https://storage.googleapis.com/epk-emoji-store/index.json',
+  // 'https://storage.googleapis.com/epk-emoji-store/index.json',
+  'epk-emoji-store': '/emojis/epk-emoji-store/2023-02-17.json',
 } as const
 
 export type EmojiPackName = keyof typeof packs

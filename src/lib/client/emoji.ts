@@ -1,4 +1,5 @@
 import { fetchJson, type FetchOptions } from './json'
+import { packs, reduceItem, validateItem, type EmojiPackName } from './packs'
 
 export interface EmojiPackItem {
   url: string
@@ -7,13 +8,21 @@ export interface EmojiPackItem {
 
 export type EmojiSet = Record<string, EmojiPackItem>
 
-export const basePath = '/emojis'
+function packEndpoint(nameOrEndpoint: string) {
+  if (/^https?/.test(nameOrEndpoint)) return nameOrEndpoint
+  if (nameOrEndpoint in packs) return packs[nameOrEndpoint as EmojiPackName]
+}
 
 export async function fetchEmojiPack(
   nameOrEndpoint: string,
   options?: FetchOptions,
 ) {
-  return /^https?/.test(nameOrEndpoint)
-    ? fetchJson<EmojiSet>(`/api/pack?url=${nameOrEndpoint}`, options)
-    : fetchJson<EmojiSet>(`/api/pack/${nameOrEndpoint}`, options)
+  const endpoint = packEndpoint(nameOrEndpoint)
+  if (!endpoint) throw new Error(`invalid emoji pack: ${nameOrEndpoint}`)
+
+  const list = await fetchJson(endpoint, options)
+  if (!Array.isArray(list))
+    throw new Error(`invalid endpoint response: ${typeof list}`)
+
+  return list.filter(validateItem).reduce(reduceItem, {} as EmojiSet)
 }

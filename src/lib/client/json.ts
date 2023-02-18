@@ -7,10 +7,10 @@ export async function fetchJson<T = unknown>(
   { fetch = window.fetch }: FetchOptions = {},
 ): Promise<T> {
   const response = await fetch(path, {
-    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
+    method: 'GET',
   })
 
   if (!response.ok) {
@@ -26,7 +26,7 @@ export async function fetchJson<T = unknown>(
       throw new Error(json.message)
     }
 
-    console.error(body)
+    console.error(body || 'unexpected error')
     throw new Error(`unable to fetch: ${path}`)
   }
 
