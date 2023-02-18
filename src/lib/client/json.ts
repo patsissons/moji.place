@@ -15,9 +15,28 @@ export async function fetchJson<T = unknown>(
 
   if (!response.ok) {
     const body = await response.text()
+    const json = tryParseJson(body)
 
-    throw new Error(body)
+    if (
+      json &&
+      typeof json === 'object' &&
+      'message' in json &&
+      typeof json.message === 'string'
+    ) {
+      throw new Error(json.message)
+    }
+
+    console.error(body)
+    throw new Error(`unable to fetch: ${path}`)
   }
 
   return response.json() as Promise<T>
+}
+
+function tryParseJson(text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    // do nothing
+  }
 }

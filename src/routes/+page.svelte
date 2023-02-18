@@ -7,34 +7,32 @@
     type EmojiPackItem,
     type EmojiSet,
   } from '$lib/client/emoji'
-  import type { PageData } from './$types'
   import { page } from '$app/stores'
+  import type { PageData } from './$types'
 
   export let data: PageData
 
-  let documentElement: HTMLElement | undefined = undefined
-  let max: number | undefined = undefined
-  let pack: string | undefined = undefined
-  let emoji: string | undefined = undefined
-  let filter: string | undefined = undefined
+  const { defaultPackName, packNames } = data
+
+  let documentElement: HTMLElement | undefined
+  let max: number | undefined
+  let pack: string | undefined
+  let emoji: string | undefined
+  let filter: string | undefined
   let dark = true
   let emojis: EmojiSet | undefined
   let emojiNames: string[] | undefined
   let filteredNames: string[] | undefined
   let selectedEmoji: EmojiPackItem | undefined
   let showModal = false
+  let error: string | undefined
 
   $: if (documentElement && pack) {
     loadEmojis(pack)
   }
 
   $: if (emojis) {
-    selectedEmoji = emoji
-      ? {
-          ...emojis[emoji],
-          name: emoji,
-        }
-      : undefined
+    selectedEmoji = emoji ? emojis[emoji] : undefined
   }
 
   $: if (emoji) {
@@ -88,9 +86,13 @@
   }
 
   const loadEmojis = async (nameOrEndpoint: string) => {
-    console.log(`loading ${nameOrEndpoint}`)
-    emojis = await fetchEmojiPack(nameOrEndpoint)
-    emojiNames = shuffle(Object.keys(emojis))
+    try {
+      console.log(`loading ${nameOrEndpoint}`)
+      emojis = await fetchEmojiPack(nameOrEndpoint)
+      emojiNames = shuffle(Object.keys(emojis))
+    } catch (err) {
+      error = err instanceof Error ? err.message : String(err)
+    }
   }
 
   onMount(() => {
@@ -100,7 +102,7 @@
     max = Number($page.url.searchParams.get('max') || 100)
     emoji = $page.url.searchParams.get('emoji') || undefined
     filter = $page.url.searchParams.get('filter') || ''
-    pack = $page.url.searchParams.get('pack') || data.packs[0]
+    pack = $page.url.searchParams.get('pack') || defaultPackName
   })
 </script>
 
@@ -111,93 +113,134 @@
 </svelte:head>
 
 <div class="w-screen h-screen min-w-[352px]">
-  <div class="navbar bg-base-100">
-    <div class="navbar-start">
-      <a class="btn btn-ghost text-xl font-bold" href={$page.url.origin}>
-        <div class="flex items-center">
-          <div class="w-12 h-12 p-1">
-            <img src="/favicon.svg" alt="moji.place logo" />
-          </div>
-          <span class="hidden sm:inline">moji.place</span>
-        </div>
-      </a>
-    </div>
-    <div class="navbar-center lg:min-w-[512px] md:min-w-[384px]">
-      <div class="form-control w-full">
-        <input
-          class="input input-bordered"
-          type="text"
-          placeholder="Search for emojis..."
-          value={filter}
-          on:input={handleFilterInput}
-        />
-      </div>
-    </div>
-    <div class="navbar-end">
-      <label class="btn btn-circle btn-ghost swap swap-rotate">
-        <input type="checkbox" bind:checked={dark} />
-        <p class="swap-on">🌙</p>
-        <p class="swap-off">🌞</p>
-      </label>
-    </div>
-  </div>
-  <div class="w-full h-full">
-    <div class="container mx-auto py-5">
-      {#if filteredNames && emojis}
-        <div class="flex flex-wrap justify-center gap-5">
-          {#each filteredNames.slice(0, max) as name}
-            <button on:click={() => handleEmojiSelect(name)}>
-              <div class="flex flex-col gap-2 w-16">
-                <div class="tooltip" data-tip={name}>
-                  <div
-                    class="w-full h-16 bg-slate-200 dark:bg-slate-600 rounded aspect-square"
-                  >
-                    <img
-                      class="w-full h-full object-contain"
-                      src={emojis[name].url}
-                      alt={`${name} emoji`}
-                    />
-                  </div>
-                  <p
-                    class="text-center text-xs whitespace-nowrap overflow-hidden text-ellipsis"
-                  >
-                    {name}
-                  </p>
-                </div>
+  <div class="drawer">
+    <input id="drawer" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-content">
+      <div class="navbar bg-base-100">
+        <div class="navbar-start">
+          <label
+            for="drawer"
+            class="btn btn-ghost drawer-button text-xl font-bold"
+          >
+            <div class="flex items-center">
+              <div class="w-12 h-12 p-1">
+                <img src="/favicon.svg" alt="moji.place logo" />
               </div>
-            </button>
-          {/each}
+              <span class="hidden sm:inline">moji.place</span>
+            </div>
+          </label>
         </div>
-        {#if max && filteredNames && filteredNames.length > max}
-          <div class="text-center p-5">
-            <p class="text-orange-500 dark:text-yellow-500">
-              ... and {(filteredNames.length - max).toLocaleString()} more emojis
-            </p>
+        <div class="navbar-center lg:min-w-[512px] md:min-w-[384px]">
+          <div class="form-control w-full">
+            <input
+              class="input input-bordered"
+              type="text"
+              placeholder="Search for emojis..."
+              value={filter}
+              on:input={handleFilterInput}
+            />
+          </div>
+        </div>
+        <div class="navbar-end">
+          <label class="btn btn-circle btn-ghost swap swap-rotate">
+            <input type="checkbox" bind:checked={dark} />
+            <p class="swap-on">🌙</p>
+            <p class="swap-off">🌞</p>
+          </label>
+        </div>
+      </div>
+      <div class="w-full h-full">
+        <div class="container mx-auto py-5">
+          {#if filteredNames && emojis}
+            <div class="flex flex-wrap justify-center gap-5">
+              {#each filteredNames.slice(0, max) as name}
+                <button on:click={() => handleEmojiSelect(name)}>
+                  <div class="flex flex-col gap-2 w-16">
+                    <div class="tooltip" data-tip={name}>
+                      <div
+                        class="w-full h-16 bg-slate-200 dark:bg-slate-600 rounded aspect-square"
+                      >
+                        <img
+                          class="w-full h-full object-contain"
+                          src={emojis[name].url}
+                          alt={`${name} emoji`}
+                        />
+                      </div>
+                      <p
+                        class="text-center text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                      >
+                        {name}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              {/each}
+            </div>
+            {#if max && filteredNames && filteredNames.length > max}
+              <div class="text-center p-5">
+                <p class="text-orange-500 dark:text-yellow-500">
+                  ... and {(filteredNames.length - max).toLocaleString()} more emojis
+                </p>
+              </div>
+            {/if}
+          {/if}
+        </div>
+        {#if error}
+          <div class="flex justify-center">
+            <div class="alert alert-error shadow-lg w-auto">
+              <div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="stroke-current flex-shrink-0 h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  ><path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <span>{error}</span>
+              </div>
+            </div>
           </div>
         {/if}
-      {/if}
-    </div>
-    {#if emojiNames && emojiNames.length === 0}
-      <div class="flex justify-center">
-        <div class="alert alert-error shadow-lg w-auto">
-          <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="stroke-current flex-shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-            <span>{pack} is not a valid emoji pack.</span>
-          </div>
-        </div>
       </div>
-    {/if}
+    </div>
+    <div class="drawer-side">
+      <label for="drawer" class="drawer-overlay" />
+      <ul class="menu p-4 w-80 bg-base-100 text-base-content">
+        <li class="menu-title" style="opacity: 1;">
+          <p class="flex items-center gap-2 text-xl font-bold">
+            <a class="btn btn-ghost" href={$page.url.origin}>
+              <svg
+                class="w-8 h-8"
+                stroke="currentColor"
+                fill="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M261.56 101.28a8 8 0 00-11.06 0L66.4 277.15a8 8 0 00-2.47 5.79L63.9 448a32 32 0 0032 32H192a16 16 0 0016-16V328a8 8 0 018-8h80a8 8 0 018 8v136a16 16 0 0016 16h96.06a32 32 0 0032-32V282.94a8 8 0 00-2.47-5.79z"
+                />
+                <path
+                  d="M490.91 244.15l-74.8-71.56V64a16 16 0 00-16-16h-48a16 16 0 00-16 16v32l-57.92-55.38C272.77 35.14 264.71 32 256 32c-8.68 0-16.72 3.14-22.14 8.63l-212.7 203.5c-6.22 6-7 15.87-1.34 22.37A16 16 0 0043 267.56L250.5 69.28a8 8 0 0111.06 0l207.52 198.28a16 16 0 0022.59-.44c6.14-6.36 5.63-16.86-.76-22.97z"
+                />
+              </svg>
+            </a>
+            <span>moji packs</span>
+          </p>
+        </li>
+        <div class="divider" />
+        {#each packNames as packName}
+          <li class="bordered text-lg">
+            <a class="" href={`?pack=${packName}`}>{packName}</a>
+          </li>
+        {/each}
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -211,26 +254,33 @@
 />
 <label for="emoji-modal" class="modal cursor-pointer">
   <label class="modal-box relative w-auto" for="">
-    {#if selectedEmoji}
+    {#if pack && emoji && selectedEmoji}
       <div class="flex flex-col items-center justify-between gap-2">
-        <a
-          class="btn btn-link btn-sm text-info"
-          href={`${$page.url.origin}?emoji=${selectedEmoji.name}&filter=${filter}`}
-        >
-          <h3 class="text-xl font-bold text-center">
-            {selectedEmoji.name}
-          </h3>
-        </a>
-        {#if navigator.canShare?.( { url: `${$page.url.origin}?emoji=${selectedEmoji.name}&filter=${filter}` }, )}
+        <div class="tooltip tooltip-bottom w-full" data-tip={emoji}>
+          <a
+            class="btn btn-link btn-sm text-info w-full"
+            href={`${$page.url.origin}?emoji=${emoji}&filter=${
+              filter || ''
+            }&pack=${pack}`}
+          >
+            <h3
+              class="text-xl font-bold text-center overflow-hidden whitespace-nowrap text-ellipsis mr-4"
+            >
+              {emoji}
+            </h3>
+          </a>
+        </div>
+        {#if navigator.canShare?.( { url: `${$page.url.origin}?emoji=${emoji}&filter=${filter}&pack=${pack}` }, )}
           <div class="absolute top-6 right-6">
             <button
               class="btn bt-ghost btn-square btn-sm"
               on:click={() =>
+                emoji &&
                 selectedEmoji &&
                 handleShare({
-                  text: selectedEmoji.name,
-                  title: `moji - ${selectedEmoji.name}`,
-                  url: `${$page.url.origin}?emoji=${selectedEmoji.name}&filter=${filter}`,
+                  text: emoji,
+                  title: `moji - ${emoji}`,
+                  url: `${$page.url.origin}?emoji=${emoji}&filter=${filter}&pack=${pack}`,
                 })}
             >
               <svg
@@ -293,29 +343,32 @@
             </a>
           {/if}
         </div>
-        <div class="flex items-center justify-center w-64 h-64">
+        <div
+          class="flex items-center justify-center w-64 h-64 border border-slate-400 rounded-lg"
+        >
           {#if navigator.canShare?.({ url: selectedEmoji.url })}
             <button
               class="btn bt-ghost btn-square w-fit h-fit"
               on:click={() =>
+                emoji &&
                 selectedEmoji &&
                 handleShare({
-                  text: selectedEmoji.name,
-                  title: selectedEmoji.name,
+                  text: emoji,
+                  title: emoji,
                   url: selectedEmoji.url,
                 })}
             >
               <img
                 class="w-full h-full object-scale-down"
                 src={selectedEmoji.url}
-                alt={`${selectedEmoji.name} emoji`}
+                alt={`${emoji} emoji`}
               />
             </button>
           {:else}
             <img
               class="w-full h-full object-scale-down"
               src={selectedEmoji.url}
-              alt={`${selectedEmoji.name} emoji`}
+              alt={`${emoji} emoji`}
             />
           {/if}
         </div>
