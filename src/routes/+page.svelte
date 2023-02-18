@@ -108,6 +108,12 @@
   })
 </script>
 
+<svelte:head>
+  {#if emoji}
+    <title>{`moji - ${emoji}`}</title>
+  {/if}
+</svelte:head>
+
 <div class="w-screen h-screen min-w-[352px]">
   <div class="navbar bg-base-100">
     <div class="navbar-start">
