@@ -81,14 +81,10 @@
     }
   }
 
-  const handleShare = () => {
-    if (!selectedEmoji || !navigator.share) return
+  const handleShare = (data: ShareData) => {
+    if (!navigator.share) return
 
-    navigator.share({
-      text: selectedEmoji.name,
-      title: selectedEmoji.name,
-      url: selectedEmoji.url,
-    })
+    navigator.share(data)
   }
 
   const loadEmojis = async (nameOrEndpoint: string) => {
@@ -225,11 +221,17 @@
             {selectedEmoji.name}
           </h3>
         </a>
-        {#if navigator.canShare?.({ url: selectedEmoji.url })}
+        {#if navigator.canShare?.( { url: `${$page.url.origin}?emoji=${selectedEmoji.name}&filter=${filter}` }, )}
           <div class="absolute top-6 right-6">
             <button
               class="btn bt-ghost btn-square btn-sm"
-              on:click={handleShare}
+              on:click={() =>
+                selectedEmoji &&
+                handleShare({
+                  text: selectedEmoji.name,
+                  title: `moji - ${selectedEmoji.name}`,
+                  url: `${$page.url.origin}?emoji=${selectedEmoji.name}&filter=${filter}`,
+                })}
             >
               <svg
                 class="w-full h-full p-1"
@@ -291,13 +293,35 @@
             </a>
           {/if}
         </div>
-        <div class="w-64 h-64">
-          <img
-            class="w-full h-full object-scale-down"
-            src={selectedEmoji.url}
-            alt={`${selectedEmoji.name} emoji`}
-          />
+        <div class="flex items-center justify-center w-64 h-64">
+          {#if navigator.canShare?.({ url: selectedEmoji.url })}
+            <button
+              class="btn bt-ghost btn-square w-fit h-fit"
+              on:click={() =>
+                selectedEmoji &&
+                handleShare({
+                  text: selectedEmoji.name,
+                  title: selectedEmoji.name,
+                  url: selectedEmoji.url,
+                })}
+            >
+              <img
+                class="w-full h-full object-scale-down"
+                src={selectedEmoji.url}
+                alt={`${selectedEmoji.name} emoji`}
+              />
+            </button>
+          {:else}
+            <img
+              class="w-full h-full object-scale-down"
+              src={selectedEmoji.url}
+              alt={`${selectedEmoji.name} emoji`}
+            />
+          {/if}
         </div>
+        {#if navigator.canShare?.({ url: selectedEmoji.url })}
+          <p class="text-info-focus text-center">👆 click to share</p>
+        {/if}
       </div>
     {/if}
   </label>
