@@ -4,7 +4,7 @@ export interface FetchOptions {
 
 export async function fetchJson<T = unknown>(
   path: string,
-  { fetch = global.fetch }: FetchOptions = {},
+  { fetch = window.fetch }: FetchOptions = {},
 ): Promise<T> {
   const response = await fetch(path, {
     method: 'GET',

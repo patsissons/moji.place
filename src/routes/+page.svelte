@@ -2,7 +2,11 @@
   import debounce from 'lodash/debounce'
   import shuffle from 'lodash/shuffle'
   import { onMount } from 'svelte'
-  import type { EmojiSetItem } from '$lib/client/emoji'
+  import {
+    fetchEmojiSet,
+    type EmojiSet,
+    type EmojiSetItem,
+  } from '$lib/client/emoji'
   import type { PageData } from './$types'
   import { page } from '$app/stores'
 
@@ -13,13 +17,13 @@
   let dark = true
   let filter = ''
   let emojiSet = data.sets[0]
-  let emojis = data.emojis[emojiSet]
-  let emojiNames = shuffle(Object.keys(emojis))
-  let visibleNames = emojiNames
+  let emojis: EmojiSet | undefined
+  let emojiNames: string[] | undefined
+  let visibleNames: string[] | undefined
   let selectedEmoji: EmojiSetItem | undefined
   let showModal = false
 
-  $: if (filter) {
+  $: if (filter && emojiNames) {
     const regex = new RegExp(filter, 'i')
     visibleNames = emojiNames.filter((name) => regex.test(name))
   }
@@ -32,11 +36,6 @@
       documentElement.classList.remove('dark')
     }
   }
-
-  onMount(() => {
-    dark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    documentElement = document.documentElement
-  })
 
   const handleFilterInput = debounce((e: Event) => {
     filter = (e.target as HTMLInputElement).value
@@ -58,6 +57,19 @@
       showModal = false
     }
   }
+
+  const loadEmojis = async () => {
+    emojis = await fetchEmojiSet(emojiSet)
+    emojiNames = shuffle(Object.keys(emojis))
+    visibleNames = emojiNames
+  }
+
+  onMount(() => {
+    dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    documentElement = document.documentElement
+
+    loadEmojis()
+  })
 </script>
 
 <div class="w-screen h-screen min-w-[352px]">
@@ -92,7 +104,7 @@
   </div>
   <div class="w-full h-full">
     <div class="container mx-auto py-5">
-      {#if visibleNames && documentElement}
+      {#if visibleNames && emojis}
         <div class="flex flex-wrap justify-center gap-5">
           {#each visibleNames.slice(0, max) as name}
             <button on:click={() => handleEmojiSelect(name)}>
@@ -117,7 +129,7 @@
             </button>
           {/each}
         </div>
-        {#if emojiNames.length > max}
+        {#if emojiNames && emojiNames.length > max}
           <div class="text-center p-5">
             <p class="text-orange-500 dark:text-yellow-500">
               ...{emojiNames.length - max} more emojis
