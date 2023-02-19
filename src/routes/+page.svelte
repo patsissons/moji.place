@@ -95,6 +95,13 @@
     navigator.share(data)
   }
 
+  const handleResetParams = () => {
+    max = 100
+    emoji = undefined
+    filter = ''
+    pack = defaultPackName
+  }
+
   const loadEmojis = async (nameOrEndpoint: string) => {
     try {
       console.log(`loading ${nameOrEndpoint}`)
@@ -228,7 +235,11 @@
       <ul class="menu p-4 w-80 bg-base-100 text-base-content">
         <li class="menu-title" style="opacity: 1;">
           <p class="flex items-center gap-2 text-xl font-bold">
-            <a class="btn btn-ghost" href={$page.url.origin}>
+            <a
+              class="btn btn-ghost"
+              href={$page.url.origin}
+              on:click={handleResetParams}
+            >
               <svg
                 class="w-8 h-8"
                 stroke="currentColor"
