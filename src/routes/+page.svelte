@@ -145,7 +145,7 @@
             </div>
           </label>
         </div>
-        <div class="navbar-center lg:min-w-[512px] md:min-w-[384px]">
+        <div class="navbar-center lg:min-w-[512px] md:min-w-[384px] gap-2">
           <div class="form-control w-full">
             <input
               class="input input-bordered"
@@ -155,6 +155,31 @@
               on:input={handleFilterInput}
             />
           </div>
+          <a
+            class="hidden sm:block btn btn-ghost btn-square"
+            href={`${$page.url.origin}?emoji=${
+              emoji || ''
+            }&filter=${filter}&pack=${pack}&max=${max}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <svg
+              class="w-full h-full p-1"
+              stroke="currentColor"
+              fill="currentColor"
+              stroke-width="0"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="48"
+                d="M200.66 352H144a96 96 0 010-192h55.41m113.18 0H368a96 96 0 010 192h-56.66m-142.27-96h175.86"
+              />
+            </svg>
+          </a>
         </div>
         <div class="navbar-end">
           <label class="btn btn-circle btn-ghost swap swap-rotate">
@@ -234,7 +259,9 @@
       <label for="drawer" class="drawer-overlay" />
       <ul class="menu p-4 w-80 bg-base-100 text-base-content">
         <li class="menu-title" style="opacity: 1;">
-          <p class="flex items-center gap-2 text-xl font-bold">
+          <p
+            class="flex items-center justify-between sm:justify-start gap-2 text-xl font-bold"
+          >
             <a
               class="btn btn-ghost"
               href={$page.url.origin}
@@ -257,6 +284,31 @@
               </svg>
             </a>
             <span>moji packs</span>
+            <a
+              class="sm:hidden btn btn-ghost btn-square"
+              href={`${$page.url.origin}?emoji=${
+                emoji || ''
+              }&filter=${filter}&pack=${pack}&max=${max}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <svg
+                class="w-full h-full p-1"
+                stroke="currentColor"
+                fill="currentColor"
+                stroke-width="0"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="48"
+                  d="M200.66 352H144a96 96 0 010-192h55.41m113.18 0H368a96 96 0 010 192h-56.66m-142.27-96h175.86"
+                />
+              </svg>
+            </a>
           </p>
         </li>
         <div class="divider" />
