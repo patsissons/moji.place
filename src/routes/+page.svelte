@@ -117,9 +117,7 @@
 </script>
 
 <svelte:head>
-  {#if emoji}
-    <title>{`moji - ${emoji}`}</title>
-  {/if}
+  <title>{emoji ? `moji - ${emoji}` : 'moji'}</title>
 </svelte:head>
 
 <div class="w-screen h-screen min-w-[352px]">
