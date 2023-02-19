@@ -1,5 +1,11 @@
 import { fetchJson, type FetchOptions } from './json'
-import { packs, reduceItem, validateItem, type EmojiPackName } from './packs'
+import {
+  hydrateSet,
+  packs,
+  reduceItem,
+  validateItem,
+  type EmojiPackName,
+} from './packs'
 
 export interface EmojiPackItem {
   url: string
@@ -24,5 +30,7 @@ export async function fetchEmojiPack(
   if (!Array.isArray(list))
     throw new Error(`invalid endpoint response: ${typeof list}`)
 
-  return list.filter(validateItem).reduce(reduceItem, {} as EmojiSet)
+  return hydrateSet(
+    list.filter(validateItem).reduce(reduceItem, {} as EmojiSet),
+  )
 }
