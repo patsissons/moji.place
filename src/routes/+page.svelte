@@ -23,6 +23,7 @@
   let emojis: EmojiSet | undefined
   let emojiNames: string[] | undefined
   let filteredNames: string[] | undefined
+  let visibleNames: string[] | undefined
   let selectedEmoji: EmojiPackItem | undefined
   let showModal = false
   let error: string | undefined
@@ -52,6 +53,8 @@
     } else {
       filteredNames = emojiNames
     }
+
+    visibleNames = filteredNames.slice(0, max)
   }
 
   $: if (documentElement) {
@@ -66,6 +69,13 @@
   const handleFilterInput = debounce((e: Event) => {
     filter = (e.target as HTMLInputElement).value
   }, 300)
+
+  const showMore = () => {
+    if (!max || !visibleNames || !filteredNames) return
+    if (visibleNames.length === filteredNames.length) return
+
+    visibleNames = filteredNames.slice(0, visibleNames.length + max)
+  }
 
   const handleEmojiSelect = (name: string) => {
     if (!emojis) return
@@ -151,9 +161,9 @@
       </div>
       <div class="w-full h-full">
         <div class="container mx-auto py-5">
-          {#if filteredNames && emojis}
+          {#if visibleNames && emojis}
             <div class="flex flex-wrap justify-center gap-5">
-              {#each filteredNames.slice(0, max) as name}
+              {#each visibleNames as name}
                 <button on:click={() => handleEmojiSelect(name)}>
                   <div class="flex flex-col gap-2 w-16">
                     <div class="tooltip" data-tip={name}>
@@ -176,11 +186,18 @@
                 </button>
               {/each}
             </div>
-            {#if max && filteredNames && filteredNames.length > max}
+            {#if max && visibleNames && filteredNames && filteredNames.length > visibleNames.length}
               <div class="text-center p-5">
-                <p class="text-orange-500 dark:text-yellow-500">
-                  ... and {(filteredNames.length - max).toLocaleString()} more emojis
-                </p>
+                <button class="btn btn-ghost btn-xs" on:click={showMore}>
+                  <p class="text-orange-500 dark:text-yellow-500 normal-case">
+                    Load the next {Math.min(
+                      max,
+                      filteredNames.length - visibleNames.length,
+                    ).toLocaleString()} of {(
+                      filteredNames.length - visibleNames.length
+                    ).toLocaleString()} emojis
+                  </p>
+                </button>
               </div>
             {/if}
           {/if}
